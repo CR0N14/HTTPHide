@@ -25,12 +25,4 @@ Packet header steganography is the technique whereby data is stored not in the p
 ## Design
 HTTPHide consists of three components: listener.py, client.py and utils.py. 
 
-The listener starts and maintain an HTTP server, while the client spawns a reverse shell that communicates with the listener via HTTP packets. Meanwhile, utils.py is a common module containing functionality that both scripts require (i.e. parsing, encoding and sending HTTP packets). 
-
-## Libraries Used (NOT FINALISED)
-socket: low-level networking for establishing connection
-requests: handle HTTP request and responses
-http.server: setup HTTP server
-urllib: URL parsing/encoding
-base64: base64 encoding
-zlib: data compression
+The listener starts and maintain an HTTP server, while the client spawns a reverse shell that communicates with the listener via HTTP packets. Meanwhile, utils.py is a common module containing functionality that both scripts require (i.e. parsing, encoding and sending HTTP packets).
