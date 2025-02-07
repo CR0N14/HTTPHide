@@ -1,5 +1,11 @@
 Misc notes. TODO: delete this on project completion
 
+# TODO
+- Handle cd
+- Ensure that client connection is uniquely identified (random requests wont throw off two-way connection)
+- Handle CTRL+C
+- Client: what happens if listener isn't up
+
 # steganography
 - different steganography methods can be enabled/disabled?
 
