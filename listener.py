@@ -7,6 +7,7 @@ Assumes only one client connects.
 # from urllib import request, parse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 import base64
+import zlib
 import threading
 import queue
 import time
@@ -32,7 +33,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         encoded_data = self.headers.get('X-Stego-Data')
         if encoded_data:
             # Decode the data
-            return base64.b64decode(encoded_data).decode('utf-8')
+            compressed_bytes = base64.b64decode(encoded_data)
+            # Decompress the data
+            return zlib.decompress(compressed_bytes).decode('utf-8')
         else:
             return ""
 

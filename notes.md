@@ -5,6 +5,11 @@ Misc notes. TODO: delete this on project completion
 - Ensure that client connection is uniquely identified (random requests wont throw off two-way connection)
 - Handle CTRL+C
 - Client: what happens if listener isn't up
+- Client: split data across multiple requests so it's not so big
+- Encryption (without increasing data size). RC4
+## Others
+- client: get_random_url() and server: basic webpages
+- server: image steganoraphy
 
 # steganography
 - different steganography methods can be enabled/disabled?
@@ -13,7 +18,6 @@ Hide data where?
 - image steganography (website icon)
 - custom header
 - custom MIME type
-- TCP options header
 
 # misc ideas
 - STRETCH: listener serves as proxy webserver to actual website? less suspicious
