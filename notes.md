@@ -10,6 +10,7 @@ Misc notes. TODO: delete this on project completion
 ## Others
 - client: get_random_url() and server: basic webpages
 - server: image steganoraphy
+- testing with IDS
 
 # steganography
 - different steganography methods can be enabled/disabled?
