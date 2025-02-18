@@ -4,9 +4,10 @@ Misc notes. TODO: delete this on project completion
 ## aaron
 - Handle cd DONE
 - Handle normal web traffic DONE
-- Handle long-running commands, and sending SIGINT
 - Client keeps attempting requests even if listener isn't up DONE
 - Client: split data across multiple requests so it's not so big
+- Client: send uncompressed if smaller
+- Handle long-running commands, and sending SIGINT
 - Encryption (without increasing data size). RC4
 - Test on live webserver
 ## others

