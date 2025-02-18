@@ -2,12 +2,13 @@ Misc notes. TODO: delete this on project completion
 
 # TODO
 ## aaron
-- Handle cd
-- Ensure that client connection is uniquely identified (random requests wont throw off two-way connection)
-- Handle CTRL+C
-- Client: what happens if listener isn't up
+- Handle cd DONE
+- Handle normal web traffic DONE
+- Handle long-running commands, and sending SIGINT
+- Client keeps attempting requests even if listener isn't up DONE
 - Client: split data across multiple requests so it's not so big
 - Encryption (without increasing data size). RC4
+- Test on live webserver
 ## others
 - client: get_random_url() and server: basic webpages
 - server: image steganoraphy

