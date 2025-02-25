@@ -6,6 +6,7 @@ Assumes only one client connects.
 
 # from urllib import request, parse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
 import base64
 import zlib
 import threading
@@ -35,7 +36,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         or just a normal request from a browser.
         '''
         # Check if stego header is present.
-        print(f"Is stego request: {self.headers.get(STEGO_HEADER_NAME)}")
         return self.headers.get(STEGO_HEADER_NAME)
     
     def get_encoded_data(self):
@@ -82,10 +82,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
             time.sleep(1)
         self.wfile.write(user_inputs.get().encode())
 
+class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
+    pass
+
 def run_http_server():
-    server_address = (LISTENER_IP, LISTENER_PORT)
-    httpd = HTTPServer(server_address, RequestHandler)
-    httpd.serve_forever()
+    server = ThreadingSimpleServer((LISTENER_IP, LISTENER_PORT), RequestHandler)
+    server.serve_forever()
 
 def main():
     # Run the http server in a background thread.
