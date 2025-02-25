@@ -1,5 +1,9 @@
 Misc notes. TODO: delete this on project completion
 
+- online recording fine
+- ensure http packet fields look legit
+- fix domain appending to url
+
 # TODO
 ## aaron
 - Handle cd DONE
