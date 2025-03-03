@@ -4,11 +4,9 @@ Misc notes. TODO: delete this on project completion
 
 # TODO
 ## aaron
-- Hide request flags DONE
 - Client: send request with fields expected of by a browser
-- Encryption (without increasing data size). AES in CFB mode
-    - Symmetric encryption
-    - You need a stream cipher, not a block cipher
+- Hide request flags DONE
+- Encryption (without increasing data size). AES in CFB mode DONE
 - Stretch:
     - Handle long-running commands, and sending SIGINT
     - Test on live webserver

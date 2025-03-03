@@ -73,6 +73,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         '''
         Serves 'normal' HTML pages from the website, not used for steganographic communication.
         '''
+        self.path = '/' # for now, all requests just return the index page regardless of path
         if self.path == '/':
             self.path = '/index.html'
         self.path = self.directory + self.path
