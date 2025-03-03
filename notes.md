@@ -4,7 +4,7 @@ Misc notes. TODO: delete this on project completion
 
 # TODO
 ## aaron
-- Hide request flags
+- Hide request flags DONE
 - Client: send request with fields expected of by a browser
 - Encryption (without increasing data size). AES in CFB mode
     - Symmetric encryption

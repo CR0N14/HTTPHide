@@ -63,16 +63,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
         ''''
         Get encoded str from request, excluding flags
         '''
-        return self.headers.get(STEGO_HEADER_NAME)
+        return self.headers.get(STEGO_HEADER_NAME)[1:]
     
     def get_request_flags(self):
-        # TODO
-        flags = RequestFlags(0)
-        if self.headers.get("IS_NOT_COMPRESSED"):
-            flags |= RequestFlags.IS_NOT_COMPRESSED
-        if self.headers.get("IS_END_OF_MESSAGE"):
-            flags |= RequestFlags.IS_END_OF_MESSAGE
-        return flags
+        char = self.headers.get(STEGO_HEADER_NAME)[0]
+        return RequestFlags.get_flags_from_char(char)
 
     def serve_normal_web_content(self):
         '''

@@ -76,11 +76,7 @@ def create_requests(data: str):
         '''
         Store request flags data in the packet
         '''
-        if RequestFlags.IS_NOT_COMPRESSED in flags:
-            request.headers["IS_NOT_COMPRESSED"] = "1"
-        if RequestFlags.IS_END_OF_MESSAGE in flags:
-            request.headers["IS_END_OF_MESSAGE"] = "1"
-        return
+        request.headers[STEGO_HEADER_NAME] = flags.get_flags_char() + request.headers[STEGO_HEADER_NAME]
     
     # The headers for the request(s) to be sent
     requests = []
@@ -148,7 +144,7 @@ def send_stego_data_to_listener(data: str):
             return response
         except Exception as e:
             print(e)
-            sleep(5) # Ensures connection retries aren't sent too frequently
+            sleep(2) # Ensures connection retries aren't sent too frequently
             continue
 
 

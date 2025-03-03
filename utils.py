@@ -19,3 +19,24 @@ CLIENT_MAX_MESSAGE_LENGTH = 200
 class RequestFlags(IntFlag):
     IS_NOT_COMPRESSED = auto()
     IS_END_OF_MESSAGE = auto()
+
+    def get_flags_char(self):
+        if RequestFlags.IS_NOT_COMPRESSED in self and RequestFlags.IS_END_OF_MESSAGE in self:
+            return "y"
+        elif RequestFlags.IS_NOT_COMPRESSED in self:
+            return "g"
+        elif RequestFlags.IS_END_OF_MESSAGE in self:
+            return "v"
+        else:
+            return "k"
+    
+    @staticmethod
+    def get_flags_from_char(char):
+        if char == "y":
+            return RequestFlags.IS_NOT_COMPRESSED | RequestFlags.IS_END_OF_MESSAGE
+        elif char == "g":
+            return RequestFlags.IS_NOT_COMPRESSED
+        elif char == "v":
+            return RequestFlags.IS_END_OF_MESSAGE
+        else:
+            return RequestFlags(0)
