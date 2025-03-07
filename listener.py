@@ -73,19 +73,36 @@ class RequestHandler(SimpleHTTPRequestHandler):
         '''
         Serves 'normal' HTML pages from the website, not used for steganographic communication.
         '''
-        self.path = '/' # for now, all requests just return the index page regardless of path
+        mimetype = 'text/html'
         if self.path == '/':
             self.path = '/index.html'
+        elif self.path == '/imgs/favicon.ico':
+            self.path = '/imgs/favicon.ico'
+            mimetype = 'image/x-icon'
+        else:
+            self.path = '/index.html' # for now, all other requests just return the index page regardless of path
         self.path = self.directory + self.path
         try:
-            with open(self.path, "r") as f:
-                file_content = f.read()
-            self.send_response(200)
+            if mimetype == 'image/x-icon':
+                with open(self.path, "rb") as f:
+                    file_content = f.read()
+                    self.send_response(200)
+                    self.send_header('Content-Type', mimetype)
+                    self.end_headers()
+                    self.wfile.write(file_content)   
+            else:
+                with open(self.path, "r") as f:
+                    file_content = f.read()
+                    self.send_response(200)
+                    self.send_header('Content-Type', mimetype)
+                    self.end_headers()
+                    self.wfile.write(bytes(file_content, 'utf-8'))       
         except:
+            print('file not found')
             file_content = 'File not found.'
             self.send_response(404)
-        self.end_headers()
-        self.wfile.write(bytes(file_content, 'utf-8'))
+            self.end_headers()
+            self.wfile.write(bytes(file_content, 'utf-8'))
 
     def send_user_input_response(self):
         '''
