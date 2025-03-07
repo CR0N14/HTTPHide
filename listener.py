@@ -109,7 +109,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         '''
         Send a steganographic response containing user input
         '''
-        favicon_input = "web/images/favicon.ico"
+        favicon_input = "web/imgs/favicon.ico"
         encode_text_in_favicon(user_inputs.get(),favicon_input)
         hidden_path = "secret_web/secret.ico"
         with open(hidden_path, 'rb') as f:
@@ -119,7 +119,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         # Write user input to HTML file contents (TODO: use image steganography instead)
         self.wfile.write(ico_data)
-        print("Sent!")
     
     def send_dummy_response(self):
         '''
@@ -202,7 +201,6 @@ def encode_text_in_favicon(input_text, input_path):
     
     # Save the image back in ICO format
     new_img.save("secret_web/secret.ico", format="ICO")
-    print(f"Text successfully encoded")
 
 def main():
     #favicon_input = "web/images/favicon.ico"

