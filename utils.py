@@ -17,7 +17,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # The max no. of chars a message from the client can be (after compression) for one request.
 # If exceed, the message will be split into multiple requests.
 CLIENT_MAX_MESSAGE_LENGTH = 200
-# To keep things simple, key and iv are hardcoded constants for now.
+# To keep things simple, key and iv are constants for now.
 AES_KEY = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10'  # 16 bytes for AES-128
 AES_IV = b'\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xaa\xbb\xcc\xdd\xee\xff'  # 16 bytes IV for CFB mode
 

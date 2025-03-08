@@ -12,7 +12,7 @@ import threading
 from queue import Queue
 import time
 from Crypto.Cipher import AES
-from ..utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, AES_KEY, AES_IV, RequestFlags
+from utils import LISTENER_IP, LISTENER_PORT, STEGO_HEADER_NAME, AES_KEY, AES_IV, RequestFlags
 from PIL import Image
 
 WEB_DIRECTORY = 'web' # Root directory of website files.

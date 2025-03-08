@@ -3,8 +3,9 @@ Misc notes. TODO: delete this on project completion
 
 # TODO
 ## main
-- make client and server folders
 - Client: send request with fields expected of by a browser
+- Hide request flags DONE
+- Encryption (without increasing data size). AES in CFB mode DONE
 - Stretch:
     - Handle long-running commands, and sending SIGINT
     - Test on live webserver
