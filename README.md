@@ -26,6 +26,10 @@ HTTPHide consists of three Python scripts: client.py, listener.py, and utils.py.
 ### web
 - This directory contains the website files for the listener's HTTP server.
 
+### secret_web
+- This directory contains the image files used for steganographic communication. 
+- 'secret.ico' is stored on the listener, 'client_secret.ico' is a copy stored on the client.
+
 ## Usage
 1. Run listener.py and client.py
 2. client.py will automatically send the first request to the listener (displaying the pwd)

