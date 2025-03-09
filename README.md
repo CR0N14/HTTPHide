@@ -1,4 +1,5 @@
 # HTTPHide: A Reverse Shell using Header Steganography
+(By P2AG1)
 
 ## Introduction
 Reverse shells are commonly used by pentesters to maintain remote control over compromised machines. However, the network traffic they generate can be easily flagged as suspicious, alerting network administrators. 
